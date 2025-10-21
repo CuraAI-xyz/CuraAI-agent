@@ -1,0 +1,121 @@
+GUÍA DE DERIVACIÓN MÉDICA POR ESPECIALIDADES
+
+CARDIOVASCULAR:
+- Especialidades: Cardiología
+- Patologías: Hipertensión arterial, Arritmia, Insuficiencia cardíaca, Cardiopatía isquémica, Infarto de miocardio, Angina de pecho
+
+ENDOCRINO:
+- Especialidades: Endocrinología
+- Patologías: Diabetes tipo 1, Diabetes tipo 2, Prediabetes, Hipotiroidismo, Hipertiroidismo, Síndrome metabólico
+
+RESPIRATORIO:
+- Especialidades: Neumología
+- Patologías: Asma, Bronquitis, EPOC, Neumonía, Fibrosis pulmonar, Apnea del sueño
+
+GASTROINTESTINAL:
+- Especialidades: Gastroenterología
+- Patologías: Gastritis, Reflujo gastroesofágico, Úlcera péptica, Síndrome del intestino irritable, Hepatitis, Colitis ulcerosa, Enfermedad de Crohn
+
+NEUROLÓGICO:
+- Especialidades: Neurología
+- Patologías: Migraña, Cefalea tensional, Epilepsia, Neuralgia del trigémino, Parkinson, Esclerosis múltiple, Accidente cerebrovascular
+
+PSIQUIÁTRICO:
+- Especialidades: Psiquiatría
+- Patologías: Depresión, Ansiedad, Trastorno bipolar, Esquizofrenia, Trastorno obsesivo-compulsivo, Estrés postraumático
+
+DERMATOLÓGICO:
+- Especialidades: Dermatología
+- Patologías: Dermatitis, Psoriasis, Acné severo, Eczema, Rosácea, Melanoma, Alopecia
+
+REUMATOLÓGICO/MUSCULOESQUELÉTICO:
+- Especialidades: Reumatología, Traumatología
+- Patologías: Artritis reumatoide, Artrosis, Osteoporosis, Lumbalgia crónica, Escoliosis, Tendinitis
+
+UROLÓGICO:
+- Especialidades: Urología
+- Patologías: Infección urinaria, Cistitis, Pielonefritis, Cálculos renales, Hiperplasia prostática, Incontinencia urinaria
+
+OTORRINOLARINGOLÓGICO:
+- Especialidades: Otorrinolaringología
+- Patologías: Amigdalitis, Otitis media, Sinusitis, Rinitis alérgica, Pérdida de audición, Desviación del tabique nasal
+
+HEMATOLÓGICO:
+- Especialidades: Hematología
+- Patologías: Anemia, Leucemia, Linfoma, Trombocitopenia, Trastornos de coagulación
+
+INFECCIOSO:
+- Especialidades: Clínica médica, Infectología
+- Patologías: Gripe, Covid-19, Dengue, Infección bacteriana, Mononucleosis, Tuberculosis
+
+ONCOLÓGICO:
+- Especialidades: Oncología
+- Patologías: Cáncer de mama, Cáncer de pulmón, Cáncer de colon, Leucemia, Melanoma metastásico
+
+GINECOLÓGICO/OBSTÉTRICO:
+- Especialidades: Ginecología, Obstetricia
+- Patologías: Embarazo de riesgo, Síndrome premenstrual severo, Endometriosis, Menopausia, Infecciones vaginales
+
+REPRODUCTIVO MASCULINO:
+- Especialidades: Urología, Endocrinología
+- Patologías: Infertilidad, Problemas de erección, Eyaculación precoz, Andropausia
+
+OFTALMOLÓGICO:
+- Especialidades: Oftalmología
+- Patologías: Conjuntivitis, Cataratas, Glaucoma, Miopía, Astigmatismo, Degeneración macular
+
+TRAUMATOLÓGICO:
+- Especialidades: Traumatología, Kinesiología
+- Patologías: Dolor lumbar agudo, Hernia de disco, Fracturas óseas, Esguince, Lesión de ligamentos
+
+NUTRICIONAL:
+- Especialidades: Nutrición, Psiquiatría
+- Patologías: Obesidad, Desnutrición, Trastornos alimenticios, Anorexia, Bulimia
+
+ALERGOLÓGICO:
+- Especialidades: Alergología, Inmunología
+- Patologías: Alergia estacional, Alergia alimentaria, Urticaria, Anafilaxia
+
+HEPATOLÓGICO:
+- Especialidades: Hepatología, Gastroenterología
+- Patologías: Hepatitis viral, Cirrosis hepática, Hígado graso no alcohólico, Colestasis
+
+NEFROLÓGICO:
+- Especialidades: Nefrología
+- Patologías: Insuficiencia renal, Nefritis, Síndrome nefrótico, Cálculos renales
+
+FISIATRÍA:
+- Especialidades: Traumatología, Fisiatría
+- Patologías: Lumbalgia, Ciática, Contracturas musculares, Dolor cervical
+
+ODONTOLÓGICO:
+- Especialidades: Odontología
+- Patologías: Caries, Gingivitis, Bruxismo, Infección dental, Maloclusión
+
+MEDICINA DEL SUEÑO:
+- Especialidades: Neurología, Medicina del sueño
+- Patologías: Trastornos del sueño, Insomnio, Narcolepsia, Apnea del sueño
+
+DERMATOLÓGICO/ALERGOLÓGICO:
+- Especialidades: Dermatología, Alergología
+- Patologías: Dermatitis atópica, Alergia por contacto, Picaduras de insecto, Reacciones cutáneas a medicamentos
+
+PSICOLÓGICO:
+- Especialidades: Psiquiatría, Psicología
+- Patologías: Trastorno de ansiedad generalizada, Ataques de pánico, Fobias, Burnout
+
+CARDIOLÓGICO/GENERAL:
+- Especialidades: Cardiología, Clínica médica
+- Patologías: Dolor torácico, Palpitaciones, Mareos por esfuerzo, Desmayo
+
+GASTROENTEROLÓGICO:
+- Especialidades: Gastroenterología
+- Patologías: Dolor abdominal, Náuseas, Vómitos, Diarrea, Estreñimiento crónico
+
+NEUROLÓGICO/OTORRINO:
+- Especialidades: Neurología, Otorrinolaringología
+- Patologías: Dolor de cabeza frecuente, Visión borrosa, Zumbidos en los oídos
+
+GENERAL/INFECCIOSO/ONCOLÓGICO:
+- Especialidades: Clínica médica, Infectología, Oncología
+- Patologías: Fiebre sin causa aparente, Pérdida de peso, Cansancio extremo

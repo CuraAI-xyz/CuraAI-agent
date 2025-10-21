@@ -1,0 +1,27 @@
+# Environment variables and credentials
+.env
+.env.local
+.env.production
+*.env
+credentials.json
+config/credentials.json
+
+# Development files
+test.ipynb
+.venv
+__pycache__
+
+# Audio files (temporary)
+*.mp3
+*.wav
+response*.mp3
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

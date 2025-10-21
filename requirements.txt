@@ -23,6 +23,7 @@ numpy==2.2.6
 pyaudio==0.2.14
 pygame==2.6.1
 keyboard==0.13.5
+simpleaudio==1.0.4
 
 # Email
 # smtplib and email are built-in Python modules
@@ -35,3 +36,8 @@ httpx==0.28.1
 pydantic==2.11.9
 typing-extensions==4.15.0
 urllib3==2.5.0
+ 
+# Google APIs (Calendar, Auth)
+google-api-python-client==2.151.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0

@@ -5,7 +5,7 @@
 *.env
 credentials.json
 config/credentials.json
-
+token.json
 # Development files
 test.ipynb
 .venv

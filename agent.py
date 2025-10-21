@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.chains.conversation.memory import ConversationBufferMemory
-from tools import send_email_tool, assistant_response, set_info_tool
+from tools import send_email_tool, assistant_response, set_info_tool, create_event_tool
 from audio_processor import main as audio_main
 from langchain.agents import initialize_agent, AgentType
 from langchain.prompts import PromptTemplate
@@ -19,13 +19,13 @@ with open(os.path.join(relative_path, "doctors_derivation.txt"), "r", encoding="
     derivation = f.read()
 
 prompting = PromptTemplate(
-    input_variables=["conversation_text", "input"],
-    template = f"""
+    input_variables=["conversation_text", "input", "derivation"],
+    template="""
 You are **CuraAI**, an advanced *voice-based medical assistant* that communicates naturally and empathetically with patients in **Spanish**.
 
 ---
 ### 🧠 Current context:
-{{conversation_text}}
+{conversation_text}
 
 ### 🎯 Your main objective:
 Maintain a fluid and human conversation with the patient to naturally gather the following data:
@@ -59,35 +59,40 @@ CuraAI: USE the `set_info("name": "Carlos")` tool
 
 Use the `send_email` tool to send an email to the doctor after you save all the information. Pass that information to the tool in this order name, surname, sex, birthday, med_inssurance, symptoms_resume as a dictionary with the keys: name, surname, sex, birthday, med_ins, resume.
 
-In the value of the 'resume' key you have to create a resume for the doctor using the symptoms and relevant infomation given from the patient. In the 'resume' value, add a possible specialitation derivation for the patient bassed in his sypmtoms using this information: {derivation}
-    
+In the value of the 'resume' key you have to create a resume for the doctor using the symptoms and relevant infomation given from the patient. In the 'resume' value, add a possible specialisation derivation for the patient bassed in his sypmtoms using this information: {{derivation}}
+    
 **Syntax:**
 `send_email(dictionary)`
+
+Use the `create_event` tool to create an event when the user requests it.
+Pass a single JSON object with keys: `title`, `description`, `start_time`, `end_time` (ISO 8601).
+**Syntax:**
+`create_event({{"title": "Test Event", "description": "This is a test event", "start_time": "2025-10-20T10:00:00Z", "end_time": "2025-10-20T11:00:00Z"}})`
+If you don't have the necessary information, just ask the user.
 
 ---
 ### 🧩 Important rule:
 Only use the tool when you **actually obtain** all the information from the patient.
-Don't use the tool everytime after the new infrormation, only use it when you have all the information
-Don't recommend medications
+Don't use the tool everytime after the new information, only use it when you have all the information.
+Don't recommend medications.
 Don't fabricate or assume information.
 ---
 
-
-
 ### 💬 Patient message:
 {input}
-""")
-
+"""
+)
 def create_agent():
     llm = ChatOpenAI(
         model="gpt-4o",
         temperature=0.1,
-        openai_api_key=OPENAI_API_KEY
+        openai_api_key=OPENAI_API_KEY, 
     )
 
     tools = [
         set_info_tool,
-        send_email_tool
+        send_email_tool,
+        create_event_tool
     ]
 
     agent_executor = initialize_agent(
@@ -115,3 +120,5 @@ def main():
         assistant_response(res["output"])
         #print("--- Memory ---")
         #print(memory.chat_memory.messages)
+
+main()

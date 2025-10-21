@@ -54,37 +54,33 @@ def save_audio(frames, frecuency):
             wf.writeframes(b''.join(frames))
         return temp_audio_file.name
 
-def transcribe_audio(frames, frecuency):
+def transcribe_audio(audio_path):
     """
     Graba audio, lo guarda y lo transcribe usando OpenAI
     """
-    audio_file_path = save_audio(frames, frecuency)
     transcript_text = ""
-
-    with open(audio_file_path, "rb") as audio_file:
+    with open(audio_path, "rb") as audio_file:
         transcript = client.audio.transcriptions.create(
             model="gpt-4o-transcribe",
             file=audio_file
         )
         transcript_text = transcript.text if transcript and hasattr(transcript, "text") else ""
 
-    os.remove(audio_file_path)
+    os.remove(audio_path)
     return transcript_text
 
 def main():
     frames, frecuency = record_audio()
+    audio_path = save_audio(frames, frecuency)
     if not frames:
         print("No se detectó audio.")
         return
 
-    transcript = transcribe_audio(frames, frecuency)
+    transcript = transcribe_audio(audio_path)
     if transcript:
-        # Devuelve un string válido para LangChain
         user_input = transcript.strip()
         return user_input
     else:
         print("No se pudo transcribir el audio.")
         return ""
 
-if __name__ == "__main__":
-    main()

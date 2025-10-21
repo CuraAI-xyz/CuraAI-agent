@@ -4,10 +4,12 @@ import pygame, time
 from audio_generator import generate_audio
 import os
 from typing import List
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 import requests
 from pubmed import get_medical_articles as fetch_articles
 from email_sender import send_email
+from googleapi import create_event
+
 # --- 1. get_medical_articles ---
 def get_medical_articles(symptoms: str) -> str:
     print("USING GET MEDICAL ARTICLES TOOL")
@@ -51,6 +53,31 @@ generate_file_tool = Tool(
     func=generate_file,
     description="Use this tool to generate a text file with the diagnosis summary."
 )
+
+
+from pydantic import BaseModel, Field
+
+class CreateEventInput(BaseModel):
+    title: str = Field(description="Event title")
+    description: str = Field(description="Event description")
+    start_time: str = Field(description="Start datetime in ISO 8601, e.g., 2025-10-21T14:00:00Z")
+    end_time: str = Field(description="End datetime in ISO 8601, e.g., 2025-10-21T17:00:00Z")
+
+def _create_event_structured(title: str, description: str, start_time: str, end_time: str) -> str:
+    create_event(title, description, start_time, end_time)
+    return "Event created"
+
+create_event_tool = StructuredTool(
+    name="create_event",
+    description=(
+        "Create a Google Calendar event. Provide a JSON object with keys: "
+        "title, description, start_time (ISO 8601), end_time (ISO 8601)."
+    ),
+    func=_create_event_structured,
+    args_schema=CreateEventInput,
+)
+
+
 from pathlib import Path
 from openai import OpenAI
 client = OpenAI()
@@ -59,8 +86,6 @@ import io
 import pyaudio
 from pathlib import Path
 from openai import OpenAI
-import simpleaudio as sa
-import tempfile
 client = OpenAI()
 speech_file_path = Path(__file__).parent / "speech.mp3"
 import tempfile
@@ -80,7 +105,7 @@ def assistant_response(ai_response: str):
         # Generar TTS y escribir en el archivo
         with client.audio.speech.with_streaming_response.create(
             model="gpt-4o-mini-tts",
-            voice="coral",
+            voice="alloy",
             input=ai_response,
             instructions="Speak in a happy and positive tone. You have to be professional and serious but close"
         ) as response:

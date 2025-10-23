@@ -44,3 +44,23 @@ def create_event(title, description, start_time, end_time):
     }
     event = service.events().insert(calendarId="primary", body=event).execute()
     return event
+
+def get_events(params: dict):
+        print("PARAMS: ", params)
+        time_min = params.get("time_min")
+        time_max = params.get("time_max")
+        events_result = service.events().list(
+            calendarId='primary', timeMin=time_min, timeMax=time_max,
+            maxResults=10, singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+        events = events_result.get('items', [])
+
+        if not events:
+            print('No upcoming events found.')
+        else:
+            for event in events:
+                start = event['start'].get('dateTime', event['start'].get('date'))
+                print(start, event['summary'],event['id'])
+        
+        return events    

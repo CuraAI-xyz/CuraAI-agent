@@ -1,5 +1,5 @@
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, UploadFile, File, Body, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, UploadFile, File, Body, HTTPException, WebSocket
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from agent import create_agent
@@ -14,7 +14,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,7 +47,7 @@ async def conversation(payload: dict = Body(...)):
     if not hasattr(app.state, "agent") or app.state.agent is None:
         raise HTTPException(status_code=400, detail="Agent not started. Call /start_agent first.")
 
-    user_input = payload.get("input", "")
+    user_input = transcribe_audio()
     if not user_input:
         raise HTTPException(status_code=422, detail="Field 'input' is required and must be non-empty.")
 
@@ -60,7 +60,13 @@ def chat_endpoint(user_input: str):
         agente = app.state.agent
         res = agente.invoke({"input": user_input})
         #print(res["output"])
-        assistant_response(res["output"])
+        assistant_response(res["output"], "./assistant_response.wav")
+        file_path = "./assistant_response.wav"
+        if not os.path.exists(file_path):
+            return {"error": "El archivo no existe"}
+    
+        return file_path
+        
 
 
 def webm_bytes_to_wav(webm_bytes: bytes, wav_path: str, rate=16000):
@@ -133,6 +139,16 @@ async def websocket_endpoint(websocket: WebSocket):
                 out = webm_bytes_to_wav(bytes(audio_buffer), "userInput.wav", rate=16000)
                 print(f"Audio convertido a {out}")
                 transcription = transcribe_audio()
-                chat_endpoint(transcription)
+                audio_file = chat_endpoint(transcription)
+                
+                # Leer el archivo de audio generado y enviarlo por WebSocket
+                if os.path.exists(audio_file):
+                    with open(audio_file, "rb") as audio_data:
+                        audio_bytes = audio_data.read()
+                        # Enviar el audio como bytes
+                        await websocket.send_bytes(audio_bytes)
+                        print(f"Audio enviado al frontend: {len(audio_bytes)} bytes")
+                else:
+                    await websocket.send_text("Error: No se pudo generar el archivo de audio")
             except Exception as e:
                 print("Error decodificando WebM/Opus:", e)

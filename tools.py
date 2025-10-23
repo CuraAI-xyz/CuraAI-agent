@@ -1,14 +1,11 @@
 import requests
-from langchain.tools import BaseTool
-import pygame, time
-from audio_generator import generate_audio
 import os
 from typing import List
 from langchain.tools import Tool, StructuredTool
 import requests
 from pubmed import get_medical_articles as fetch_articles
 from email_sender import send_email
-from googleapi import create_event
+from googleapi import create_event, get_events
 
 # --- 1. get_medical_articles ---
 def get_medical_articles(symptoms: str) -> str:
@@ -89,45 +86,38 @@ from openai import OpenAI
 client = OpenAI()
 speech_file_path = Path(__file__).parent / "speech.mp3"
 import tempfile
-import pygame
 
-def assistant_response(ai_response: str):
+def assistant_response(ai_response: str, output_path: str = "audios/output.wav"):
     """
-    Genera TTS usando gpt-4o-mini-tts y lo reproduce inmediatamente.
-    Compatible con MP3 en Windows sin errores de permisos.
+    Genera TTS usando gpt-4o-mini-tts y guarda el resultado en un archivo WAV o MP3.
+    No lo reproduce.
     """
-    # Crear archivo temporal
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+    # Asegurar carpeta
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Crear archivo temporal (por compatibilidad en Windows)
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
     temp_file_path = temp_file.name
-    temp_file.close()  # Cerramos para que OpenAI pueda escribir en él
+    temp_file.close()
 
     try:
-        # Generar TTS y escribir en el archivo
+        # Generar TTS y escribir en el archivo temporal
         with client.audio.speech.with_streaming_response.create(
-            model="gpt-4o-mini-tts",
+            model="tts-1",
             voice="alloy",
-            input=ai_response,
-            instructions="Speak in a happy and positive tone. You have to be professional and serious but close"
+            input=ai_response
         ) as response:
             response.stream_to_file(temp_file_path)
 
-        # Reproducir con pygame
-        pygame.mixer.init()
-        pygame.mixer.music.load(temp_file_path)
-        pygame.mixer.music.play()
-        while pygame.mixer.music.get_busy():
-            pygame.time.Clock().tick(10)  # Espera mientras se reproduce
+        # Mover el archivo temporal al destino
+        os.replace(temp_file_path, output_path)
 
-        # Detener y limpiar el mixer antes de eliminar el archivo
-        pygame.mixer.music.stop()
-        pygame.mixer.quit()
-
-    finally:
-        # Eliminar el archivo temporal
+    except Exception as e:
+        print(f"Error al generar audio: {e}")
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
-    return ai_response
+    return output_path
 
 def format_memory_to_text(memory) -> str:
     msgs = getattr(memory, "chat_memory", None)
@@ -173,4 +163,19 @@ send_email_tool = Tool(
     name="send_email",
     func=send_email,
     description="Use this tool to send an email"
+)
+
+
+class CreateEventInput(BaseModel):
+    time_min: str = Field(description="Start datetime in ISO 8601, e.g., 2025-10-21T14:00:00Z")
+    time_max: str = Field(description="End datetime in ISO 8601, e.g., 2025-10-21T17:00:00Z")
+
+def get_events(params: dict):
+    events = get_events(params)
+    return events
+
+get_events_tool = Tool(
+    name="get_events",
+    func=get_events,
+    description="Use this tool to get the next 10 events on the calendar"
 )

@@ -12,7 +12,7 @@ import json
 load_dotenv()
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
-credentials_env = json.load(os.getenv("CREDENTIALS_JSON"))
+credentials_env = json.loads(os.getenv("CREDENTIALS_JSON"))
 creds = None
 if os.path.exists("token.json"):
     creds = Credentials.from_authorized_user_file("token.json")

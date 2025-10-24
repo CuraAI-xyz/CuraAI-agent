@@ -15,35 +15,29 @@ SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 def get_authenticated_service():
     """Obtiene el servicio autenticado de Google Calendar"""
-    creds = None
-    # El archivo token.json almacena los tokens de acceso y actualización del usuario
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    credentials_json = os.getenv("CREDENTIALS_JSON")
+    if not credentials_json:
+        raise ValueError("CREDENTIALS_JSON environment variable is not set")
     
-    # Si no hay credenciales válidas disponibles, permite al usuario hacer login
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            # Cargar credenciales desde variable de entorno
-            credentials_json = os.getenv("CREDENTIALS_JSON")
-            if not credentials_json:
-                raise ValueError("CREDENTIALS_JSON environment variable is not set")
-            
-            try:
-                credentials_dict = json.loads(credentials_json)
-                flow = InstalledAppFlow.from_client_config(credentials_dict, SCOPES)
-                creds = flow.run_local_server(port=0)
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON in CREDENTIALS_JSON: {e}")
-            except Exception as e:
-                raise ValueError(f"Error loading credentials: {e}")
+    try:
+        credentials_dict = json.loads(credentials_json)
         
-        # Guardar las credenciales para la próxima ejecución
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
-    
-    return build('calendar', 'v3', credentials=creds)
+        # Crear credenciales directamente - NO usar flow.run_local_server()
+        creds = Credentials(
+            token=credentials_dict.get('access_token'),
+            refresh_token=credentials_dict.get('refresh_token'),
+            token_uri=credentials_dict.get('token_uri', 'https://oauth2.googleapis.com/token'),
+            client_id=credentials_dict.get('client_id'),
+            client_secret=credentials_dict.get('client_secret'),
+            scopes=SCOPES
+        )
+        
+        return build('calendar', 'v3', credentials=creds)
+        
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in CREDENTIALS_JSON: {e}")
+    except Exception as e:
+        raise ValueError(f"Error loading credentials: {e}")
 
 # Inicializar el servicio
 service = get_authenticated_service()

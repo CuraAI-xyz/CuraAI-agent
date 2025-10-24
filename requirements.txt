@@ -21,7 +21,7 @@ numpy==2.2.6
 
 # Audio Processing (alternativas compatibles con Render)
 simpleaudio==1.0.4
-# pyaudio==0.2.14  # Comentado - no compatible con Render
+pyaudio==0.2.14  # Comentado - no compatible con Render
 # pygame==2.6.1    # Comentado - puede causar problemas en Render
 # keyboard==0.13.5 # Comentado - no funciona en entornos sin GUI
 

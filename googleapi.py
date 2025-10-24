@@ -5,9 +5,10 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-
+import os
+import json
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
-
+credentials_env = json.load(os.getenv("CREDENTIALS_JSON"))
 creds = None
 if os.path.exists("token.json"):
     creds = Credentials.from_authorized_user_file("token.json")
@@ -17,7 +18,7 @@ if not creds or not creds.valid:
         creds.refresh(Request())
 
     else:
-        credentials_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "credentials.json")
+        credentials_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), credentials_env)
         flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
         creds = flow.run_local_server(port=0)        
 

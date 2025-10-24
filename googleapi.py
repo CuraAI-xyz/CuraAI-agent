@@ -12,29 +12,41 @@ import json
 load_dotenv()
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
-credentials_env = json.loads(os.getenv("CREDENTIALS_JSON"))
-creds = None
-if os.path.exists("token.json"):
-    creds = Credentials.from_authorized_user_file("token.json")
 
-if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
+def get_authenticated_service():
+    """Obtiene el servicio autenticado de Google Calendar"""
+    creds = None
+    # El archivo token.json almacena los tokens de acceso y actualización del usuario
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    
+    # Si no hay credenciales válidas disponibles, permite al usuario hacer login
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            # Cargar credenciales desde variable de entorno
+            credentials_json = os.getenv("CREDENTIALS_JSON")
+            if not credentials_json:
+                raise ValueError("CREDENTIALS_JSON environment variable is not set")
+            
+            try:
+                credentials_dict = json.loads(credentials_json)
+                flow = InstalledAppFlow.from_client_config(credentials_dict, SCOPES)
+                creds = flow.run_local_server(port=0)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON in CREDENTIALS_JSON: {e}")
+            except Exception as e:
+                raise ValueError(f"Error loading credentials: {e}")
+        
+        # Guardar las credenciales para la próxima ejecución
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
+    
+    return build('calendar', 'v3', credentials=creds)
 
-    else:
-        credentials_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), credentials_env)
-        flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
-        creds = flow.run_local_server(port=0)        
-
-    with open("token.json", "w") as token:
-        token.write(creds.to_json())
-
-try:
-    service = build("calendar", "v3", credentials=creds)
-       
-except HttpError as error:
-    print(f"ERROR: {error}")
-
+# Inicializar el servicio
+service = get_authenticated_service()
 
 def create_event(title, description, start_time, end_time):
     event = {

@@ -5,8 +5,12 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from dotenv import load_dotenv
 import os
 import json
+
+load_dotenv()
+
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 credentials_env = json.load(os.getenv("CREDENTIALS_JSON"))
 creds = None

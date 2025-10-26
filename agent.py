@@ -2,10 +2,10 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.chains.conversation.memory import ConversationBufferMemory
-from tools import send_email_tool, set_info_tool, create_event_tool, get_events_tool
+from tools import send_email_tool, set_info_tool, create_event_tool, get_events_tool, assistant_response
 from langchain.agents import initialize_agent, AgentType
 from langchain.prompts import PromptTemplate
-import json
+from audio_processor import main as audio_main
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -123,10 +123,12 @@ def create_agent():
 def main():
     agente = create_agent()
     while True:
-        #user_input = audio_main()
-        user_input = input("TU:")
+        user_input = audio_main()
+        #user_input = input("TU:")
         res = agente.invoke({"input": user_input})
-        print(res["output"])
-        #assistant_response(res["output"])
+        #print(res["output"])
+        assistant_response(res["output"])
         #print("--- Memory ---")
         #print(memory.chat_memory.messages)
+
+main()

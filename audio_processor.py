@@ -1,65 +1,62 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-import pyaudio
-import wave
+import sounddevice as sd
+import soundfile as sf
+import numpy as np
 import keyboard
 import tempfile
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def record_audio(frecuency=16000, channels=1, fragment=512):
+def record_audio(frecuency=16000, channels=1):
     """
     Grabación push-to-talk: comienza al presionar ENTER y termina al soltar ENTER.
+    Usa sounddevice en lugar de pyaudio (compatible con Render)
     """
-    p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16,
-                    channels=channels,
-                    rate=frecuency,
-                    input=True,
-                    frames_per_buffer=fragment)
-
     print("Mantén presionado ENTER para grabar...")
     # Espera a que ENTER esté presionado
     while not keyboard.is_pressed('enter'):
         pass
 
     print("Grabando... suelta ENTER para detener la grabación")
-    frames = []
+    recording = []
 
     try:
-        while keyboard.is_pressed('enter'):
-            data = stream.read(fragment, exception_on_overflow=False)
-            frames.append(data)
+        # Grabar audio mientras ENTER esté presionado
+        with sd.InputStream(samplerate=frecuency, channels=channels, dtype='int16') as stream:
+            while keyboard.is_pressed('enter'):
+                data, overflowed = stream.read(frecuency // 10)  # Leer ~100ms a la vez
+                recording.append(data)
     except KeyboardInterrupt:
         pass
 
     print("Grabación detenida")
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
+    
+    if recording:
+        # Concatenar todos los frames
+        frames = np.concatenate(recording, axis=0)
+        return frames, frecuency
+    return None, frecuency
 
-    return frames, frecuency
-
-def save_audio(frames, frecuency):
+def save_audio(frames, frecuencia):
     """
-    Guarda el audio en un archivo WAV temporal y devuelve su path
+    Guarda el audio como userInput.wav en el directorio temporal
+    y devuelve su ruta completa.
     """
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio_file:
-        with wave.open(temp_audio_file.name, 'wb') as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(pyaudio.PyAudio().get_sample_size(pyaudio.paInt16))
-            wf.setframerate(frecuency)
-            wf.writeframes(b''.join(frames))
-        return temp_audio_file.name
+    temp_dir = tempfile.gettempdir()  # obtiene /tmp en Linux o %TEMP% en Windows
+    audio_path = os.path.join(temp_dir, "userInput.wav")
 
-def transcribe_audio():
+    sf.write(audio_path, frames, frecuencia, format='WAV')
+    return audio_path
+
+def transcribe_audio(audio_path):
     """
     Graba audio, lo guarda y lo transcribe usando OpenAI
     """
     transcript_text = ""
-    with open("userInput.wav", "rb") as audio_file:
+    with open(audio_path, "rb") as audio_file:
         transcript = client.audio.transcriptions.create(
             model="gpt-4o-transcribe",
             file=audio_file
@@ -70,11 +67,12 @@ def transcribe_audio():
 
 def main():
     frames, frecuency = record_audio()
-    audio_path = save_audio(frames, frecuency)
-    if not frames:
+    # Validar si frames es None o está vacío
+    if frames is None or (isinstance(frames, np.ndarray) and frames.size == 0):
         print("No se detectó audio.")
-        return
-
+        return ""
+    
+    audio_path = save_audio(frames, frecuency)
     transcript = transcribe_audio(audio_path)
     if transcript:
         user_input = transcript.strip()

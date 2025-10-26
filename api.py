@@ -11,7 +11,7 @@ import av
 from audio_processor import transcribe_audio
 import io 
 app = FastAPI()
-
+port = int(os.environ.get("PORT", 8080))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -152,3 +152,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     await websocket.send_text("Error: No se pudo generar el archivo de audio")
             except Exception as e:
                 print("Error decodificando WebM/Opus:", e)
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=port)                

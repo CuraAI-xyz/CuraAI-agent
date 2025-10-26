@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: cura-ai
+    env: python
+    buildCommand: |
+      apt-get update && apt-get install -y portaudio19-dev
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: uvicorn api:app --host 0.0.0.0 --port 8080

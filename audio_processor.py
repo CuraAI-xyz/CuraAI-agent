@@ -1,10 +1,8 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-import sounddevice as sd
 import soundfile as sf
 import numpy as np
-import keyboard
 import tempfile
 
 load_dotenv()

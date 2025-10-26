@@ -130,5 +130,3 @@ def main():
         assistant_response(res["output"])
         #print("--- Memory ---")
         #print(memory.chat_memory.messages)
-
-main()

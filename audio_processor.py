@@ -10,11 +10,9 @@ import tempfile
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def record_audio(frecuency=16000, channels=1):
-    """
+""" def record_audio(frecuency=16000, channels=1):
     Grabación push-to-talk: comienza al presionar ENTER y termina al soltar ENTER.
     Usa sounddevice en lugar de pyaudio (compatible con Render)
-    """
     print("Mantén presionado ENTER para grabar...")
     # Espera a que ENTER esté presionado
     while not keyboard.is_pressed('enter'):
@@ -38,7 +36,7 @@ def record_audio(frecuency=16000, channels=1):
         # Concatenar todos los frames
         frames = np.concatenate(recording, axis=0)
         return frames, frecuency
-    return None, frecuency
+    return None, frecuency """
 
 def save_audio(frames, frecuencia):
     """
@@ -51,12 +49,12 @@ def save_audio(frames, frecuencia):
     sf.write(audio_path, frames, frecuencia, format='WAV')
     return audio_path
 
-def transcribe_audio(audio_path):
+def transcribe_audio():
     """
     Graba audio, lo guarda y lo transcribe usando OpenAI
     """
     transcript_text = ""
-    with open(audio_path, "rb") as audio_file:
+    with open("userInput.wav", "rb") as audio_file:
         transcript = client.audio.transcriptions.create(
             model="gpt-4o-transcribe",
             file=audio_file

@@ -47,29 +47,33 @@ def save_audio(frames, frecuencia):
     sf.write(audio_path, frames, frecuencia, format='WAV')
     return audio_path
 
-def transcribe_audio():
+def transcribe_audio(audio_path=None):
     """
-    Graba audio, lo guarda y lo transcribe usando OpenAI
+    Transcribe audio usando OpenAI
     """
+    if audio_path is None:
+        audio_path = "userInput.wav"
+    
     transcript_text = ""
-    with open("userInput.wav", "rb") as audio_file:
-        transcript = client.audio.transcriptions.create(
-            model="gpt-4o-transcribe",
-            file=audio_file
-        )
-        transcript_text = transcript.text if transcript and hasattr(transcript, "text") else ""
-
+    
+    if not os.path.exists(audio_path):
+        print(f"Archivo de audio no encontrado: {audio_path}")
+        return ""
+    
+    try:
+        with open(audio_path, "rb") as audio_file:
+            transcript = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file
+            )
+            transcript_text = transcript.text if transcript and hasattr(transcript, "text") else ""
+    except Exception as e:
+        print(f"Error transcribiendo audio: {e}")
+    
     return transcript_text
 
 def main():
-    frames, frecuency = record_audio()
-    # Validar si frames es None o está vacío
-    if frames is None or (isinstance(frames, np.ndarray) and frames.size == 0):
-        print("No se detectó audio.")
-        return ""
-    
-    audio_path = save_audio(frames, frecuency)
-    transcript = transcribe_audio(audio_path)
+    transcript = transcribe_audio()
     if transcript:
         user_input = transcript.strip()
         return user_input

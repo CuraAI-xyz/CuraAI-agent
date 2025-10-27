@@ -47,7 +47,7 @@ async def conversation(payload: dict = Body(...)):
     if not hasattr(app.state, "agent") or app.state.agent is None:
         raise HTTPException(status_code=400, detail="Agent not started. Call /start_agent first.")
 
-    user_input = transcribe_audio()
+    user_input = transcribe_audio("userInput.wav")
     if not user_input:
         raise HTTPException(status_code=422, detail="Field 'input' is required and must be non-empty.")
 
@@ -115,43 +115,61 @@ def webm_bytes_to_wav(webm_bytes: bytes, wav_path: str, rate=16000):
 
 @app.websocket("/audio")
 async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
+    try:
+        await websocket.accept()
+        print("WebSocket connection accepted")
+    except Exception as e:
+        print(f"Error accepting WebSocket: {e}")
+        return
+    
     timeout_seconds = 3
 
-    while True:
-        audio_buffer = bytearray()
-        try:
-            while True:
-                try:
-                    data = await asyncio.wait_for(websocket.receive_bytes(), timeout=timeout_seconds)
-                    print(f"Received {len(data)} bytes of audio data")
-                    audio_buffer.extend(data)
-                except asyncio.TimeoutError:
-                    print("No bytes received in 3 seconds. Ending recording.")
-                    break
-
-        except Exception as e:
-            print(f"WebSocket error: {e}")
-            break  
-
-        if audio_buffer:
+    try:
+        while True:
+            audio_buffer = bytearray()
             try:
-                out = webm_bytes_to_wav(bytes(audio_buffer), "userInput.wav", rate=16000)
-                print(f"Audio convertido a {out}")
-                transcription = transcribe_audio()
-                audio_file = chat_endpoint(transcription)
-                
-                # Leer el archivo de audio generado y enviarlo por WebSocket
-                if os.path.exists(audio_file):
-                    with open(audio_file, "rb") as audio_data:
-                        audio_bytes = audio_data.read()
-                        # Enviar el audio como bytes
-                        await websocket.send_bytes(audio_bytes)
-                        print(f"Audio enviado al frontend: {len(audio_bytes)} bytes")
-                else:
-                    await websocket.send_text("Error: No se pudo generar el archivo de audio")
+                while True:
+                    try:
+                        data = await asyncio.wait_for(websocket.receive_bytes(), timeout=timeout_seconds)
+                        print(f"Received {len(data)} bytes of audio data")
+                        audio_buffer.extend(data)
+                    except asyncio.TimeoutError:
+                        print("No bytes received in 3 seconds. Ending recording.")
+                        break
+                    except Exception as e:
+                        print(f"Error receiving data: {e}")
+                        break
+
             except Exception as e:
-                print("Error decodificando WebM/Opus:", e)
+                print(f"WebSocket error: {e}")
+                break  
+
+            if audio_buffer:
+                try:
+                    out = webm_bytes_to_wav(bytes(audio_buffer), "userInput.wav", rate=16000)
+                    print(f"Audio convertido a {out}")
+                    transcription = transcribe_audio(out)
+                    audio_file = chat_endpoint(transcription)
+                    
+                    # Leer el archivo de audio generado y enviarlo por WebSocket
+                    if os.path.exists(audio_file):
+                        with open(audio_file, "rb") as audio_data:
+                            audio_bytes = audio_data.read()
+                            # Enviar el audio como bytes
+                            await websocket.send_bytes(audio_bytes)
+                            print(f"Audio enviado al frontend: {len(audio_bytes)} bytes")
+                    else:
+                        await websocket.send_text("Error: No se pudo generar el archivo de audio")
+                except Exception as e:
+                    print("Error decodificando WebM/Opus:", e)
+    
+    except Exception as e:
+        print(f"WebSocket connection error: {e}")
+    finally:
+        try:
+            await websocket.close()
+        except:
+            pass
 
 
 if __name__ == "__main__":

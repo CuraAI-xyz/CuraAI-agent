@@ -123,28 +123,42 @@ async def websocket_endpoint(websocket: WebSocket):
         return
     
     timeout_seconds = 3
+    connection_open = True
 
     try:
-        while True:
+        while connection_open:
             audio_buffer = bytearray()
             try:
                 while True:
                     try:
-                        data = await asyncio.wait_for(websocket.receive_bytes(), timeout=timeout_seconds)
-                        print(f"Received {len(data)} bytes of audio data")
-                        audio_buffer.extend(data)
+                        # Intentar recibir cualquier tipo de mensaje
+                        message = await asyncio.wait_for(websocket.receive(), timeout=timeout_seconds)
+                        
+                        # Verificar el tipo de mensaje
+                        if "bytes" in message:
+                            data = message["bytes"]
+                            print(f"Received {len(data)} bytes of audio data")
+                            audio_buffer.extend(data)
+                        elif "text" in message:
+                            print(f"Received text message: {message['text']}")
+                        elif message.get("type") == "websocket.disconnect":
+                            print("Client disconnected")
+                            connection_open = False
+                            break
                     except asyncio.TimeoutError:
                         print("No bytes received in 3 seconds. Ending recording.")
                         break
                     except Exception as e:
                         print(f"Error receiving data: {e}")
+                        connection_open = False
                         break
 
             except Exception as e:
                 print(f"WebSocket error: {e}")
+                connection_open = False
                 break  
 
-            if audio_buffer:
+            if audio_buffer and connection_open:
                 try:
                     out = webm_bytes_to_wav(bytes(audio_buffer), "userInput.wav", rate=16000)
                     print(f"Audio convertido a {out}")
@@ -166,6 +180,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         print(f"WebSocket connection error: {e}")
     finally:
+        print("Closing WebSocket connection")
         try:
             await websocket.close()
         except:

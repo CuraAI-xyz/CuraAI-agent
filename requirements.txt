@@ -21,7 +21,7 @@ numpy==2.2.6
 
 # Audio Processing (solo lectura/escritura de archivos)
 soundfile
-
+av
 # Email
 # smtplib and email are built-in Python modules
 

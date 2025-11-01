@@ -5,7 +5,7 @@ from langchain.tools import Tool, StructuredTool
 import requests
 from pubmed import get_medical_articles as fetch_articles
 from email_sender import send_email
-from googleapi import create_event, get_events
+from googleapi import create_event, get_events as get_events_from_google
 
 # --- 1. get_medical_articles ---
 def get_medical_articles(symptoms: str) -> str:
@@ -75,10 +75,6 @@ create_event_tool = StructuredTool(
 )
 
 
-from pathlib import Path
-from openai import OpenAI
-client = OpenAI()
-speech_file_path = Path(__file__).parent / "speech.mp3"
 import io
 from pathlib import Path
 from openai import OpenAI
@@ -158,23 +154,45 @@ set_info_tool = Tool(
     description="Use this tool to save data of a patient. Example input: {'name': 'Mauro'}"
 )
 
-send_email_tool = Tool(
+class SendEmailInput(BaseModel):
+    name: str = Field(description="Patient's first name")
+    surname: str = Field(description="Patient's last name")
+    sex: str = Field(description="Patient's gender")
+    birthday: str = Field(description="Patient's date of birth")
+    resume: str = Field(description="Summary of the patient's situation")
+    med_ins: str = Field(description="Patient's health insurance")
+
+
+def send_email_structured(name: str, surname: str, sex: str, birthday: str, resume: str, med_ins: str):
+    send_email(
+        name=name,
+        surname=surname,
+        sex=sex,
+        birthday=birthday,
+        resume=resume,
+        med_ins=med_ins)
+    return "Email sent to the doctor."
+
+send_email_tool = StructuredTool(
     name="send_email",
-    func=send_email,
-    description="Use this tool to send an email"
+    func=send_email_structured,
+    description="Use this tool to send an email to the doctor with patient information. Pass: name, surname, sex, birthday, resume (symptoms summary), med_ins (health insurance yes/no)",
+    args_schema=SendEmailInput,
 )
 
 
-class CreateEventInput(BaseModel):
+class GetEventsInput(BaseModel):
     time_min: str = Field(description="Start datetime in ISO 8601, e.g., 2025-10-21T14:00:00Z")
     time_max: str = Field(description="End datetime in ISO 8601, e.g., 2025-10-21T17:00:00Z")
 
-def get_events(params: dict):
-    events = get_events(params)
+def get_events_structured(time_min: str, time_max: str):
+    params = {"time_min": time_min, "time_max": time_max}
+    events = get_events_from_google(params)
     return events
 
-get_events_tool = Tool(
+get_events_tool = StructuredTool(
     name="get_events",
-    func=get_events,
-    description="Use this tool to get the next 10 events on the calendar"
+    func=get_events_structured,
+    description="Use this tool to get the next 10 events on the calendar within a date range. Provide time_min and time_max in ISO 8601 format.",
+    args_schema=GetEventsInput,
 )

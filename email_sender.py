@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def send_email(params: dict) -> str:
+def send_email(name: str, surname: str, sex: str, birthday: str, resume: str,  med_ins: str) -> str:
     sender_email = os.getenv("EMAIL_SENDER")
     password = os.getenv("EMAIL_PASSWORD")
     receiver_email = os.getenv("EMAIL_RECEIVER")
@@ -16,19 +16,11 @@ def send_email(params: dict) -> str:
     # Validar que las variables de entorno estén configuradas
     if not all([sender_email, password, receiver_email]):
         raise ValueError("Email credentials not configured. Please set EMAIL_SENDER, EMAIL_PASSWORD, and EMAIL_RECEIVER environment variables.")
-    
-    params = json.loads(params)
     msg = MIMEMultipart("alternative")
     msg["Subject"] = "Información de paciente - CuraAI 🤖"
     msg["From"] = sender_email
     msg["To"] = receiver_email
     text = "Este correo tiene formato HTML. Si no ves los estilos, abrilo en un cliente compatible."
-    name = params['name']
-    surname = params['surname']
-    sex = params['sex']
-    birthday = params['birthday']
-    resume = params['resume']
-    med_ins = params['med_ins']
     html = f"""
     <html>
     <body style="font-family: Arial, sans-serif; background-color: white; margin: 0; padding: 20px;">

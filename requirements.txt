@@ -2,6 +2,7 @@
 langchain==0.3.27
 langchain-openai==0.3.33
 openai==1.107.3
+openai-agents
 
 # Web Framework
 fastapi==0.115.6

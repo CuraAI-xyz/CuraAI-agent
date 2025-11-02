@@ -6,12 +6,15 @@ openai==1.107.3
 # Web Framework
 fastapi==0.115.6
 uvicorn==0.35.0
+python-multipart==0.0.12
+websockets==14.1
 
 # Environment and Configuration
 python-dotenv==1.1.1
 
 # HTTP Requests
 requests==2.32.5
+httpx==0.28.1
 
 # OCR and Image Processing
 easyocr==1.7.2
@@ -19,24 +22,18 @@ opencv-python-headless==4.12.0.88
 pillow==11.3.0
 numpy==2.2.6
 
-# Audio Processing (solo lectura/escritura de archivos)
-soundfile
-av
-# Email
-# smtplib and email are built-in Python modules
+# Audio Processing
+soundfile==0.12.1
+av==14.1.0
 
-# Additional dependencies
-certifi==2025.8.3
-charset-normalizer==3.4.3
-httpx==0.28.1
-pydantic==2.11.9
-typing-extensions==4.15.0
-urllib3==2.5.0
- 
 # Google APIs (Calendar, Auth)
 google-api-python-client==2.151.0
 google-auth-oauthlib==1.2.1
 google-auth-httplib2==0.2.0
 
-websockets
-python-multipart
+# Additional dependencies
+certifi==2025.8.3
+charset-normalizer==3.4.3
+pydantic==2.11.9
+typing-extensions==4.15.0
+urllib3==2.5.0

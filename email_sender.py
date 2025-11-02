@@ -5,7 +5,7 @@ import json
 import sys
 import os
 from dotenv import load_dotenv
-
+from typing import Union, Dict
 load_dotenv()
 
 def send_email(name: str, surname: str, sex: str, birthday: str, resume: str,  med_ins: str) -> str:

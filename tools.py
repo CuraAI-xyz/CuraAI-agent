@@ -1,4 +1,4 @@
-from agents import function_tool
+from langchain_core.tools import tool
 from googleapi import create_event, get_events
 from email_sender import send_email
 import os
@@ -7,18 +7,29 @@ from pathlib import Path
 from openai import OpenAI
 
 ## Create Event Tool
-@function_tool
+@tool
 def create_event_tool(title: str, description: str, start_time: str, end_time: str) -> str:
-    """Create a Google Calendar event."""
+    """Create a Google Calendar event.
+    
+    Args:
+        title: Event title
+        description: Event description
+        start_time: Start time in ISO format (e.g., "2024-01-15T09:00:00Z")
+        end_time: End time in ISO format (e.g., "2024-01-15T10:00:00Z")
+    
+    Returns:
+        Confirmation message that event was created successfully
+    """
     create_event(title, description, start_time, end_time)
     return "Event created successfully"
+
 
 client = OpenAI()
 speech_file_path = Path(__file__).parent / "speech.mp3"
 
 def assistant_response(ai_response: str, output_path: str = "audios/output.wav"):
     """
-    Genera TTS usando gpt-4o-mini-tts y guarda el resultado en un archivo WAV o MP3.
+    Genera TTS usando tts-1 y guarda el resultado en un archivo WAV o MP3.
     No lo reproduce.
     """
     # Asegurar carpeta
@@ -49,23 +60,43 @@ def assistant_response(ai_response: str, output_path: str = "audios/output.wav")
     return output_path
 
 
-@function_tool
+@tool
 def send_email_tool(name: str, surname: str, sex: str, birthday: str, resume: str, med_ins: str) -> str:
-    """Send an email to the doctor with patient information."""
+    """Send an email to the doctor with patient information.
+    
+    Args:
+        name: Nombre del paciente
+        surname: Apellido del paciente
+        sex: Sexo del paciente
+        birthday: Fecha de nacimiento del paciente
+        resume: Resumen de los síntomas del paciente
+        med_ins: Información sobre seguro médico del paciente
+    
+    Returns:
+        Confirmation message that email was sent to the doctor
+    """
     send_email(
         name=name,
         surname=surname,
         sex=sex,
         birthday=birthday,
         resume=resume,
-        med_ins=med_ins)
+        med_ins=med_ins
+    )
     return "Email sent to the doctor."
 
 
-
-@function_tool
+@tool
 def get_events_tool(time_min: str, time_max: str) -> str:
-    """Retrieve upcoming events within a specific date range."""
-    params={"time_min": time_min, "time_max": time_max}
+    """Retrieve upcoming events within a specific date range.
+    
+    Args:
+        time_min: Fecha de inicio de búsqueda en formato ISO (e.g., "2024-01-15T09:00:00Z")
+        time_max: Fecha de fin de búsqueda en formato ISO (e.g., "2024-01-15T17:00:00Z")
+    
+    Returns:
+        List of events within the specified date range
+    """
+    params = {"time_min": time_min, "time_max": time_max}
     events = get_events(params)
     return events

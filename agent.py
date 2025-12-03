@@ -76,7 +76,7 @@ If you think the conversation is over and the patient doesn't need anything else
 agente_memoria = Agent(
         name="AgenteMemoria",
         instructions=prompt,
-        model="gpt-4o-mini",
+        model="gpt-4o",
         tools=[create_event_tool, send_email_tool, get_events_tool]
     )
 
@@ -90,6 +90,7 @@ def test_3():
         conversation_history.append({"role": "user", "content": user_input})
         result = Runner.run_sync(agente_memoria, conversation_history)
         conversation_history.append({"role": "assistant", "content": result.final_output})
-        #print(result.final_output)
+        print(result.final_output)
 
 
+#test_3()

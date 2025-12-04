@@ -66,13 +66,12 @@ async def assistant_response_streaming(text: str):
     try:
         # Usar with_streaming_response para obtener el stream
         with client.audio.speech.with_streaming_response.create(
-            model="tts-1",  # tts-1 es más rápido que tts-1-hd
+            model="tts-1", 
             voice="alloy",
             input=text,
-            response_format="mp3"  # Considera "opus" para mejor compresión si el frontend lo soporta
+            response_format="opus" 
         ) as response:
             # Leer chunks del stream en lugar de esperar todo
-            # Chunk size de 4096 bytes es un buen balance
             chunk_size = 4096
             async for chunk in response.stream.iter_bytes(chunk_size=chunk_size):
                 if chunk:

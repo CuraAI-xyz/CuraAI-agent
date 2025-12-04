@@ -28,7 +28,6 @@ class AgentState(TypedDict):
     resume: str                # Resumen clínico o de la interacción
     email_sent: bool = False           # Flag para evitar múltiples envíos de email
 
-# Define una estructura estricta para validación de decisiones (usado si el LLM devuelve JSON)
 class RouteDecision(BaseModel):
     decision: Literal["ir_a_mail", "ir_a_calendario", "responder_usuario"] = Field(
         ..., 
@@ -42,11 +41,10 @@ def clean_messages(messages):
         if not isinstance(m, ToolMessage) # Elimina respuestas de herramientas para limpiar contexto
     ]
 
-# Define la herramienta que el LLM puede invocar. El decorador @tool la registra en LangChain.
+
 @tool("send_email_tool", description="Envia un mail al doctor cuando el paciente se despide")
 def send_email_tool(name: str, surname: str, sex: str, birthday: str, resume: str, med_ins: str):
     try:
-        # Llama a la función real de envío de correo importada externamente
         send_email(
             name=name,
             surname=surname,

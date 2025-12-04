@@ -1,10 +1,13 @@
 from langchain_core.tools import tool
 from googleapi import create_event, get_events
-from email_sender import send_email
 import os
 import tempfile
 from pathlib import Path
 from openai import OpenAI
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 
 ## Create Event Tool
 @tool
@@ -27,64 +30,57 @@ def create_event_tool(title: str, description: str, start_time: str, end_time: s
 client = OpenAI()
 speech_file_path = Path(__file__).parent / "speech.mp3"
 
-def assistant_response(ai_response: str, output_path: str = "audios/output.wav"):
+def assistant_response(text, file_path=None):
     """
-    Genera TTS usando tts-1 y guarda el resultado en un archivo WAV o MP3.
-    No lo reproduce.
+    Genera audio y RETORNA LOS BYTES (no guarda archivo).
+    Versión síncrona para compatibilidad con endpoints HTTP.
     """
-    # Asegurar carpeta
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-    # Crear archivo temporal (por compatibilidad en Windows)
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-    temp_file_path = temp_file.name
-    temp_file.close()
-
     try:
-        # Generar TTS y escribir en el archivo temporal
-        with client.audio.speech.with_streaming_response.create(
+        response = client.audio.speech.create(
             model="tts-1",
             voice="alloy",
-            input=ai_response
-        ) as response:
-            response.stream_to_file(temp_file_path)
-
-        # Mover el archivo temporal al destino
-        os.replace(temp_file_path, output_path)
+            input=text,
+            response_format="mp3" # O pcm/opus para menor tamaño
+        )
+        
+        # ✅ CORRECTO: Retornar el contenido binario
+        return response.content 
 
     except Exception as e:
-        print(f"Error al generar audio: {e}")
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
-
-    return output_path
+        print(f"❌ Error en TTS: {e}")
+        # Retornamos None para que el main sepa que falló
+        return None
 
 
-@tool
-def send_email_tool(name: str, surname: str, sex: str, birthday: str, resume: str, med_ins: str) -> str:
-    """Send an email to the doctor with patient information.
+async def assistant_response_streaming(text: str):
+    """
+    Genera audio con STREAMING y retorna chunks progresivamente.
+    Útil para WebSocket donde se puede enviar audio tan pronto como se genera.
     
     Args:
-        name: Nombre del paciente
-        surname: Apellido del paciente
-        sex: Sexo del paciente
-        birthday: Fecha de nacimiento del paciente
-        resume: Resumen de los síntomas del paciente
-        med_ins: Información sobre seguro médico del paciente
-    
-    Returns:
-        Confirmation message that email was sent to the doctor
+        text: Texto a convertir a audio
+        
+    Yields:
+        bytes: Chunks de audio MP3
     """
-    send_email(
-        name=name,
-        surname=surname,
-        sex=sex,
-        birthday=birthday,
-        resume=resume,
-        med_ins=med_ins
-    )
-    return "Email sent to the doctor."
-
+    try:
+        # Usar with_streaming_response para obtener el stream
+        with client.audio.speech.with_streaming_response.create(
+            model="tts-1",  # tts-1 es más rápido que tts-1-hd
+            voice="alloy",
+            input=text,
+            response_format="mp3"  # Considera "opus" para mejor compresión si el frontend lo soporta
+        ) as response:
+            # Leer chunks del stream en lugar de esperar todo
+            # Chunk size de 4096 bytes es un buen balance
+            chunk_size = 4096
+            async for chunk in response.stream.iter_bytes(chunk_size=chunk_size):
+                if chunk:
+                    yield chunk
+                
+    except Exception as e:
+        print(f"❌ Error en TTS streaming: {e}")
+        yield None
 
 @tool
 def get_events_tool(time_min: str, time_max: str) -> str:
@@ -100,3 +96,59 @@ def get_events_tool(time_min: str, time_max: str) -> str:
     params = {"time_min": time_min, "time_max": time_max}
     events = get_events(params)
     return events
+
+@tool
+def send_email(name: str, surname: str, sex: str, birthday: str, resume: str,  med_ins: str) -> str:
+    """Envía un correo electrónico al doctor con la información del paciente.
+    
+    Args:
+        name: Nombre del paciente
+        surname: Apellido del paciente
+        sex: Sexo biológico del paciente
+        birthday: Fecha de nacimiento del paciente
+        resume: Resumen de la situación clínica del paciente
+        med_ins: Cobertura médica u obra social del paciente
+    
+    Returns:
+        Mensaje de confirmación indicando que el correo fue enviado exitosamente
+    
+    Raises:
+        ValueError: Si las credenciales de correo no están configuradas en las variables de entorno
+    """
+    sender_email = os.getenv("EMAIL_SENDER")
+    password = os.getenv("EMAIL_PASSWORD")
+    receiver_email = os.getenv("EMAIL_RECEIVER")
+    
+    # Validar que las variables de entorno estén configuradas
+    if not all([sender_email, password, receiver_email]):
+        raise ValueError("Email credentials not configured. Please set EMAIL_SENDER, EMAIL_PASSWORD, and EMAIL_RECEIVER environment variables.")
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "Información de paciente - CuraAI 🤖"
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    text = "Este correo tiene formato HTML. Si no ves los estilos, abrilo en un cliente compatible."
+    html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; background-color: white; margin: 0; padding: 20px;">
+        <div style="display: flex; flex-direction: column; align-items: flex-start; max-width: 600px; background: #61A5C2; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <h1 style="color: white">CuraAI</h1>
+        <h2 style="color: white;">Hola doctor/a, soy Cura, le envío la información del paciente.</h2>
+        <p style="color: white;">Nombre: {name}</p>
+        <p style="color: white;">Apellido: {surname}</p>
+        <p style="color: white;">Fecha de nacimiento: {birthday}</p>
+        <p style="color: white;">Cobertura médica: {med_ins}</p>
+        <p style="color: white;">Sexo: {sex}</p>
+        <p style="color: white;">Resumen de la situación del paciente: {resume}</p>
+        </div>
+    </body>
+    </html>
+    """
+
+    msg.attach(MIMEText(text, "plain"))
+    msg.attach(MIMEText(html, "html"))
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+
+    return "Correo enviado exitosamente al doctor."    

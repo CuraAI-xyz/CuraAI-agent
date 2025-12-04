@@ -6,9 +6,8 @@ from pydantic import BaseModel, Field
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.messages import ToolMessage
-from tools import create_event_tool, get_events_tool 
+from tools import create_event_tool, get_events_tool, send_email 
 from langgraph.checkpoint.memory import MemorySaver
-from email_sender import send_email as real_send_email
 from langchain_core.tools import tool
 import requests
 
@@ -48,7 +47,7 @@ def clean_messages(messages):
 def send_email_tool(name: str, surname: str, sex: str, birthday: str, resume: str, med_ins: str):
     try:
         # Llama a la función real de envío de correo importada externamente
-        real_send_email(
+        send_email(
             name=name,
             surname=surname,
             sex=sex,
@@ -64,7 +63,7 @@ def send_email_tool(name: str, surname: str, sex: str, birthday: str, resume: st
     
 
 # Inicializa el modelo GPT-4o y le "enseña" que tiene disponible la herramienta send_email_tool
-llm = ChatOpenAI(model="gpt-4o").bind_tools([send_email_tool])
+llm = ChatOpenAI(model="gpt-3.5-turbo").bind_tools([send_email_tool])
 
 # --- NODOS ---
 # Nodo principal de conversación: procesa el input y genera respuesta
@@ -82,7 +81,8 @@ def conv_node(state: AgentState) -> AgentState:
     debes responder calurosamente Y LUEGO invocar la herramienta send_email_tool
     con los datos que tengas del paciente. No debes hacer un diagnostico sobre los sintomas del paciente
     ni recomendar medicamentos. Debes tener una charla amigable y empática con el paciente para obtener informacion sobre su situacion
-    """)
+    La respuesta debe tener como maximo tres oraciones
+                            """)
 
     # Invoca al LLM pasando el System Message + el historial de conversación
     response = llm.invoke([sys_msg] + cleaned)

@@ -6,10 +6,12 @@
 credentials.json
 config/credentials.json
 token.json
+
 # Development files
 test.ipynb
 .venv
 __pycache__
+.langgraph_api
 
 # Audio files (temporary)
 *.mp3
@@ -25,3 +27,11 @@ response*.mp3
 # OS files
 .DS_Store
 Thumbs.db
+
+# Old files
+agent.py
+api.py
+agente_langgraph.py
+
+
+RECOMENDACIONES_LATENCIA_AUDIO.md

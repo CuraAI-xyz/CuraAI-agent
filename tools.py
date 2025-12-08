@@ -1,15 +1,16 @@
 from langchain_core.tools import tool
 from googleapi import create_event, get_events
 import os
-import tempfile
 from pathlib import Path
 from openai import OpenAI
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from supabase import create_client
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_KEY = os.environ["SUPABASE_ANON_KEY"]  
 
 
-## Create Event Tool
 @tool
 def create_event_tool(title: str, description: str, start_time: str, end_time: str) -> str:
     """Create a Google Calendar event.
@@ -40,15 +41,13 @@ def assistant_response(text, file_path=None):
             model="tts-1",
             voice="alloy",
             input=text,
-            response_format="mp3" # O pcm/opus para menor tamaño
+            response_format="mp3" 
         )
         
-        # ✅ CORRECTO: Retornar el contenido binario
         return response.content 
 
     except Exception as e:
         print(f"❌ Error en TTS: {e}")
-        # Retornamos None para que el main sepa que falló
         return None
 
 
@@ -64,7 +63,6 @@ async def assistant_response_streaming(text: str):
         bytes: Chunks de audio MP3
     """
     try:
-        # Usar with_streaming_response para obtener el stream
         with client.audio.speech.with_streaming_response.create(
             model="tts-1", 
             voice="alloy",
@@ -151,3 +149,32 @@ def send_email(name: str, surname: str, sex: str, birthday: str, resume: str,  m
         server.sendmail(sender_email, receiver_email, msg.as_string())
 
     return "Correo enviado exitosamente al doctor."    
+
+@tool
+def show_calendar() -> str:
+    """ 
+    Muestra el calendario al paciente.
+    Returns:
+        JSON string con la configuración.
+    """
+    return '{"action": "open_calendar", "date": "today"}'
+
+@tool
+def update_database(patient_id: str, field: str, value: str) -> str:
+    """Actualiza un campo específico en la base de datos del paciente.
+    
+    Args:
+        patient_id: ID único del paciente
+        field: Campo a actualizar (e.g., "med_insurance", "birthday", "resume")
+        value: Nuevo valor para el campo
+    Returns:
+        Mensaje de confirmación indicando que la base de datos fue actualizada exitosamente
+    """
+    
+    try:
+        client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        data = {field: value}      
+        res = client.table("UsersData").update(data).eq("user_id", patient_id).execute()
+        return f"Base de datos actualizada: {field} establecido a {value} para paciente {patient_id}."    
+    except Exception as e:
+        return f"Error al actualizar la base de datos: {e}"

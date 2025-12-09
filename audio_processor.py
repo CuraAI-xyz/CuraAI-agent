@@ -23,7 +23,7 @@ def record_audio(frecuency=16000, channels=1):
         # Grabar audio mientras ENTER esté presionado
         with sd.InputStream(samplerate=frecuency, channels=channels, dtype='int16') as stream:
             while keyboard.is_pressed('enter'):
-                data, overflowed = stream.read(frecuency // 10)  # Leer ~100ms a la vez
+                data, overflowed = stream.read(frecuency // 10)  
                 recording.append(data)
     except KeyboardInterrupt:
         pass
@@ -41,7 +41,7 @@ def save_audio(frames, frecuencia):
     Guarda el audio como userInput.wav en el directorio temporal
     y devuelve su ruta completa.
     """
-    temp_dir = tempfile.gettempdir()  # obtiene /tmp en Linux o %TEMP% en Windows
+    temp_dir = tempfile.gettempdir()  
     audio_path = os.path.join(temp_dir, "userInput.wav")
 
     sf.write(audio_path, frames, frecuencia, format='WAV')

@@ -4,7 +4,13 @@ from app.config.settings import settings
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from supabase import create_client
+
+try:
+    from supabase import create_client
+except ImportError:
+    # Si supabase no está instalado, creamos una función stub
+    def create_client(*args, **kwargs):
+        raise ImportError("Supabase dependencies not installed. Install supabase package.")
 
 @tool
 def create_event_tool(title: str, description: str, start_time: str, end_time: str) -> str:

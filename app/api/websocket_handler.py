@@ -81,6 +81,11 @@ async def handle_websocket_connection(websocket: WebSocket):
                             await websocket.send_text("Error: No se encontró sesión de usuario")
                             continue
                     
+                    # Verificar si la sesión existe, si no, crearla automáticamente
+                    if not session_service.get_session(patient_id):
+                        print(f"Creando sesión automáticamente para patient_id: {patient_id}")
+                        session_service.create_session(patient_id)
+                    
                     audio_bytes = await process_chat_message(transcription, patient_id=patient_id)
                     current_result = session_service.get_session(patient_id)
                     

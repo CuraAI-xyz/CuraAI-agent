@@ -100,13 +100,13 @@ def send_email(name: str, surname: str, sex: str, birthday: str, resume: str, me
     return "Correo enviado exitosamente al doctor."
 
 @tool()
-def show_calendar() -> str:
+def show_calendar(link) -> str:
     """ 
     Muestra el calendario al paciente.
     Returns:
         JSON string con la configuración.
     """
-    return '{"action": "open_calendar", "date": "today"}'
+    return f'{{"action": "open_calendar", "date": "today", "url": "{link}"}}'
 
 @tool
 def update_database(patient_id: str, field: str, value: str) -> str:
@@ -127,3 +127,22 @@ def update_database(patient_id: str, field: str, value: str) -> str:
     except Exception as e:
         return f"Error al actualizar la base de datos: {e}"
 
+@tool
+def search_doctors(speciality: str, location: str) -> str:
+    """Busca médicos según la especialidad y ubicación proporcionadas.
+    
+    Args:
+        speciality: Especialidad médica (e.g., "cardiología", "dermatología")
+        location: Ubicación geográfica (e.g., "Buenos Aires", "CABA")
+    
+    Returns:
+        Lista de médicos que coinciden con los criterios de búsqueda
+    """
+    try:
+        client = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
+        data = {"speciality": speciality, "location": location}      
+        res = client.table("DoctorsData").select("*").match(data).execute()
+        print(res.data)
+        return res.data    
+    except Exception as e:
+        return f"Error al actualizar la base de datos: {e}"

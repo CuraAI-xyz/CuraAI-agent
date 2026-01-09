@@ -1,5 +1,6 @@
 import time
 import logging
+from langchain_core.messages import HumanMessage
 from core.agents import app_graph
 from core.tools.audio_compat import assistant_response
 from app.services.session_service import session_service
@@ -15,16 +16,35 @@ async def process_chat_message(user_input: str, patient_id: str):
     if not current_state:
         raise ValueError("Usuario no inicializado")
     
+    config = {"configurable": {"thread_id": patient_id}}
+    
+    # Recuperar el estado previo del checkpointer de LangGraph
+    snapshot = app_graph.get_state(config)
+    checkpoint_messages = []
+    if snapshot and snapshot.values:
+        checkpoint_messages = snapshot.values.get("messages", [])
+    
+    # Sincronizar: usar el historial más largo entre session_service y checkpointer
+    session_messages = current_state.get("messages", [])
+    if len(session_messages) > len(checkpoint_messages):
+        # Si session_service tiene más mensajes, usamos ese historial
+        messages_to_use = session_messages
+    else:
+        # Si el checkpointer tiene más mensajes (o están iguales), usamos ese
+        messages_to_use = checkpoint_messages
+    
+    # Agregar el nuevo mensaje del usuario al historial
+    new_user_message = HumanMessage(content=user_input)
+    messages_with_new = messages_to_use + [new_user_message]
+    
     graph_input = {
         "query": user_input,
-        "messages": current_state.get("messages", []),
+        "messages": messages_with_new,
         "name": current_state.get("name"),
         "surname": current_state.get("surname"),
         "sex": current_state.get("sex"),
         "patient_id": current_state.get("patient_id")
     }
-    
-    config = {"configurable": {"thread_id": patient_id}}
     
     t0 = time.perf_counter()
     result = app_graph.invoke(graph_input, config=config)

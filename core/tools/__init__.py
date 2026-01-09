@@ -3,7 +3,8 @@ from .agent_tools import (
     get_events_tool,
     send_email,
     update_database,
-    show_calendar
+    show_calendar, 
+    search_doctors
 )
 
 __all__ = [
@@ -11,6 +12,7 @@ __all__ = [
     "get_events_tool",
     "send_email",
     "update_database",
+    "search_doctors",
     "show_calendar"
 ]
 

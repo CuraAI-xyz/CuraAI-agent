@@ -68,6 +68,13 @@ async def handle_websocket_connection(websocket: WebSocket):
 
             if audio_buffer and connection_open:
                 try:
+                    # Validar que el buffer tenga un tamaño mínimo antes de procesar
+                    buffer_size = len(audio_buffer)
+                    if buffer_size < 100:
+                        print(f"Buffer demasiado pequeño ({buffer_size} bytes), ignorando...")
+                        continue
+                    
+                    print(f"Procesando audio: {buffer_size} bytes recibidos")
                     wav_in_memory = webm_bytes_to_wav(bytes(audio_buffer), rate=16000)
                     transcription = transcribe_audio(wav_in_memory)
                     print(f"Transcription: {transcription}")
@@ -116,10 +123,24 @@ async def handle_websocket_connection(websocket: WebSocket):
                     else:
                         await websocket.send_text("Error: No se generó audio válido")
                         
+                except ValueError as e:
+                    # Errores de validación (buffer vacío, muy pequeño, etc.)
+                    print(f"Error de validación de audio: {e}")
+                    await websocket.send_text(f"Error: {str(e)}")
+                    continue
+                except RuntimeError as e:
+                    # Errores de decodificación WebM
+                    error_msg = str(e)
+                    print(f"Error decodificando WebM: {error_msg}")
+                    # No enviar el error técnico al cliente, solo loguear
+                    await websocket.send_text("Error: No se pudo procesar el audio. Por favor, intenta de nuevo.")
+                    continue
                 except Exception as e:
                     print(f"Error procesando audio ciclo completo: {e}")
                     import traceback
                     traceback.print_exc()
+                    await websocket.send_text("Error: Ocurrió un error al procesar el audio")
+                    continue
     
     except Exception as e:
         print(f"WebSocket connection error: {e}")

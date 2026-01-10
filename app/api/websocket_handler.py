@@ -81,6 +81,11 @@ async def handle_websocket_connection(websocket: WebSocket):
                             await websocket.send_text("Error: No se encontró sesión de usuario")
                             continue
                     
+                    # Validar que patient_id sea válido
+                    if not patient_id or (isinstance(patient_id, str) and patient_id.strip() == ""):
+                        await websocket.send_text("Error: patient_id inválido")
+                        continue
+                    
                     # Verificar si la sesión existe, si no, crearla automáticamente
                     if not session_service.get_session(patient_id):
                         print(f"Creando sesión automáticamente para patient_id: {patient_id}")

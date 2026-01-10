@@ -11,10 +11,16 @@ async def process_chat_message(user_input: str, patient_id: str):
     """
     Procesa un mensaje de chat y retorna el audio de respuesta
     """
+    # Validar que patient_id sea válido
+    if not patient_id or (isinstance(patient_id, str) and patient_id.strip() == ""):
+        raise ValueError("patient_id inválido o vacío")
+    
     current_state = session_service.get_session(patient_id)
     
+    # Crear sesión automáticamente si no existe
     if not current_state:
-        raise ValueError("Usuario no inicializado")
+        logger.info(f"Creando sesión automáticamente para patient_id: {patient_id}")
+        current_state = session_service.create_session(patient_id)
     
     config = {"configurable": {"thread_id": patient_id}}
     

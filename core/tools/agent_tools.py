@@ -2,6 +2,7 @@ from langchain_core.tools import tool
 from infrastructure.google import create_event, get_events
 from app.config.settings import settings
 import smtplib
+import json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -136,13 +137,32 @@ def search_doctors(speciality: str, location: str) -> str:
         location: Ubicación geográfica (e.g., "Buenos Aires", "CABA")
     
     Returns:
-        Lista de médicos que coinciden con los criterios de búsqueda
+        Lista de médicos que coinciden con los criterios de búsqueda en formato JSON string
     """
     try:
         client = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
-        data = {"speciality": speciality, "location": location}      
-        res = client.table("DoctorsData").select("*").match(data).execute()
-        print(res.data)
-        return res.data    
+        
+        # Usar filtros más flexibles en lugar de match exacto
+        query = client.table("DoctorsData").select("*")
+        
+        # Filtrar por especialidad (case-insensitive, búsqueda parcial)
+        if speciality:
+            query = query.ilike("speciality", f"%{speciality}%")
+        
+        # Filtrar por ubicación (case-insensitive, búsqueda parcial)
+        if location:
+            query = query.ilike("location", f"%{location}%")
+        
+        res = query.execute()
+        print(f"Resultados de búsqueda de médicos: {res.data}")
+        
+        # Convertir a JSON string para que LangChain pueda procesarlo correctamente
+        if res.data:
+            return json.dumps(res.data, ensure_ascii=False)
+        else:
+            return json.dumps([])
+            
     except Exception as e:
-        return f"Error al actualizar la base de datos: {e}"
+        error_msg = f"Error al buscar médicos: {e}"
+        print(error_msg)
+        return error_msg

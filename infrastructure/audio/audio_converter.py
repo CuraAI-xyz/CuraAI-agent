@@ -24,30 +24,20 @@ def webm_bytes_to_wav(webm_bytes: bytes, rate: int = None) -> io.BytesIO:
     ]
     
     is_valid_webm = any(webm_bytes.startswith(sig) for sig in webm_signatures)
-    if not is_valid_webm:
-        # Intentar buscar el header más adelante (algunos streams pueden tener prefijos)
-        found_header = False
-        for sig in webm_signatures:
-            if sig in webm_bytes[:1024]:  # Buscar en los primeros 1KB
-                found_header = True
-                break
-        
-        if not found_header:
-            # Log para debugging pero intentar procesar de todas formas
-            # (algunos codecs pueden tener headers diferentes)
-            print(f"Warning: No se encontró header WebM estándar en los primeros bytes. Tamaño buffer: {len(webm_bytes)} bytes")
-            print(f"Primeros 20 bytes (hex): {webm_bytes[:20].hex()}")
+    detected_format = None
     
     try:
         # Intentar abrir como WebM primero
         try:
             container = av.open(io.BytesIO(webm_bytes), mode="r", format="webm")
+            detected_format = "webm"
         except Exception as format_error:
             # Si falla con formato webm, intentar detección automática
-            print(f"Warning: Error abriendo como WebM, intentando detección automática: {format_error}")
+            # Esto es normal para dispositivos iOS/iPad que envían MP4/MOV
             try:
                 container = av.open(io.BytesIO(webm_bytes), mode="r")
-                print(f"Formato detectado automáticamente: {container.format.name if container.format else 'desconocido'}")
+                detected_format = container.format.name if container.format else "desconocido"
+                print(f"Info: Formato detectado automáticamente: {detected_format} (dispositivo puede estar enviando formato diferente a WebM)")
             except Exception as auto_error:
                 raise RuntimeError(f"No se pudo abrir el contenedor de audio. Error WebM: {format_error}, Error auto-detección: {auto_error}")
         
@@ -87,7 +77,8 @@ def webm_bytes_to_wav(webm_bytes: bytes, rate: int = None) -> io.BytesIO:
         container.close()
 
         if not pcm_chunks:
-            raise RuntimeError("No se pudo decodificar ningún frame de audio del WebM.")
+            format_name = detected_format or "audio"
+            raise RuntimeError(f"No se pudo decodificar ningún frame de audio del contenedor {format_name}.")
 
         wav_buffer = io.BytesIO()
         with wave.open(wav_buffer, "wb") as wf:
@@ -101,7 +92,8 @@ def webm_bytes_to_wav(webm_bytes: bytes, rate: int = None) -> io.BytesIO:
         return wav_buffer
     
     except Exception as e:
-        error_msg = f"Error decodificando WebM/Opus: {e}"
+        format_name = detected_format or "audio"
+        error_msg = f"Error decodificando {format_name}: {e}"
         print(error_msg)
         raise RuntimeError(error_msg) from e
 
